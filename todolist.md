@@ -4,7 +4,7 @@
 
 - Python 版本: 3.12.10 (严禁使用其他版本，避免依赖冲突)
 - LLM 模型: qwen3.7-plus (通过百炼 API 调用)
-- 代码风格：禁止使用emoji
+- 代码风格：禁止使用emoji，使用中文注释与打印，各人员完成对应阶段后需编写DEVLOG.md
 - Embedding 模型: text-embedding-v4
 - 鉴权方式: 统一读取系统环境变量 API_KEY，代码中禁止硬编码
 - 核心框架: LangChain + Pandas + NumPy + ChromaDB + FastAPI + Vue3
