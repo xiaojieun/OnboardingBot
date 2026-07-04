@@ -1,13 +1,17 @@
 """向量库和CSV文件管理工具函数"""
 
 import csv
+import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 import pandas as pd
 from langchain_chroma import Chroma
-from langchain_community.embeddings import DashScopeEmbeddings
+
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    from langchain_community.embeddings import DashScopeEmbeddings
 
 
 # 文件路径
