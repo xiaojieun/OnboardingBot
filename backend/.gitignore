@@ -1,0 +1,53 @@
+# Backend specific ignores
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# Vector Store (generated files)
+VectorStore/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Ruff
+.ruff_cache/
+
+# Black
+.ipynb_checkpoints
+
+# Pre-commit
+.pre-commit-cache/
+
+# Data files (should be tracked, but generated files shouldn't)
+data/raw/*.pdf
+data/rules/*.csv
+
+# Generated documentation
+docs/*.html

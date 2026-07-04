@@ -1,0 +1,41 @@
+# 入职智引系统后端依赖
+# 锁定 Python 3.12.10 兼容版本
+
+# 核心框架
+fastapi==0.115.7
+uvicorn==0.35.0
+pydantic==2.10.4
+
+# LangChain 核心
+langchain==0.3.13
+langchain-core==0.3.28
+langchain-community==0.3.13
+langchain-text-splitters==0.3.4
+
+# 通义千问集成
+langchain-alibabacloud-llm==0.1.1
+dashscope==1.20.14
+
+# 向量数据库
+chromadb==0.5.23
+
+# 数据处理
+pandas==2.2.3
+numpy==1.26.4
+pdfplumber==0.11.4
+pypdf==5.1.0
+
+# 工具库
+python-dotenv==1.0.1
+httpx==0.28.1
+aiofiles==24.1.0
+
+# 开发与测试
+pytest==8.3.4
+pytest-asyncio==0.24.0
+ruff==0.8.6
+black==24.10.0
+pre-commit==4.0.1
+
+# 日志与监控
+loguru==0.7.3
