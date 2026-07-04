@@ -1,0 +1,7 @@
+参数名,参数值,描述
+chunk_size,512,文本切片大小
+chunk_overlap,50,文本切片重叠大小
+embedding_model,text-embedding-v4,向量化模型名称
+llm_model,qwen3.7-plus,大语言模型名称
+max_response_length,2000,单轮回答最大字数
+timeout_seconds,30,API调用超时时间

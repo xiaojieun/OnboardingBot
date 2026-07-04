@@ -45,9 +45,6 @@ Thumbs.db
 # Pre-commit
 .pre-commit-cache/
 
-# Data files (should be tracked, but generated files shouldn't)
-data/raw/*.pdf
-data/rules/*.csv
 
 # Generated documentation
 docs/*.html
