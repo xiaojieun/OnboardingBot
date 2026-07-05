@@ -1,0 +1,141 @@
+:root {
+  --bg: #f5f6fa;
+  --bg-card: #ffffff;
+  --border: #e5e4e7;
+  --text: #2d2d35;
+  --text-secondary: #6b6375;
+  --primary: #4f46e5;
+  --primary-light: rgba(79, 70, 229, 0.1);
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #d97706;
+  --sidebar-width: 220px;
+  --header-height: 56px;
+  font-family: system-ui, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  padding: 8px 18px;
+}
+
+.btn-primary:hover {
+  background: #4338ca;
+}
+
+.btn-primary:disabled {
+  background: #a5a5b8;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  padding: 4px 12px;
+  font-size: 12px;
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+}
+
+.btn-ghost:hover {
+  background: var(--bg);
+}
+
+input,
+textarea {
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+  width: 100%;
+}
+
+input:focus,
+textarea:focus {
+  border-color: var(--primary);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-card);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th,
+td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  background: #f8f8fb;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+tr:hover {
+  background: #faf9fc;
+}
+
+.card {
+  background: var(--bg-card);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 20px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.empty-tip {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 40px;
+}
+
+.loading-tip {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 20px;
+}

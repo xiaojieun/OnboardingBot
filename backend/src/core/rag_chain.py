@@ -9,7 +9,7 @@ from typing import Optional
 # 确保backend目录在路径中
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from langchain_community.chat_models.tongyi import ChatTongyi
+from langchain_openai import ChatOpenAI
 from langchain_community.embeddings import DashScopeEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.chat_history import BaseChatMessageHistory, InMemoryChatMessageHistory
@@ -121,10 +121,11 @@ def build_rag_chain() -> RunnableWithMessageHistory:
 
     # 初始化LLM（绑定工具）
     api_key = os.environ.get("DASHSCOPE_API_KEY") or os.environ.get("API_KEY")
-    llm = ChatTongyi(
+    llm = ChatOpenAI(
         model=llm_config["llm_model"],
         api_key=api_key,
         temperature=0.3,
+        base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
     )
     llm_with_tools = llm.bind_tools(ALL_TOOLS)
 
@@ -231,12 +232,13 @@ def get_stream_answer(question: str, session_id: str = "default"):
     llm_config = get_llm_config()
     max_response_length = int(llm_config["max_response_length"])
 
+    api_key = os.environ.get("API_KEY")
     # 初始化LLM
-    api_key = os.environ.get("DASHSCOPE_API_KEY") or os.environ.get("API_KEY")
-    llm = ChatTongyi(
+    llm = ChatOpenAI(
         model=llm_config["llm_model"],
         api_key=api_key,
         temperature=0.3,
+        base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
     )
 
     # 检索相关文档
