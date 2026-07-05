@@ -281,3 +281,68 @@ const eventSource = new EventSource('/api/chat');
 > - Swagger 接口文档 ： http://localhost:8000/docs
 > - ReDoc 文档 ： http://localhost:8000/redoc
 > - 健康检查 ： http://localhost:8000/health
+
+---
+
+## 九、Bug 修复：Function Call 工具无法触发
+
+### 修复时间：2026-07-05
+
+### 问题描述
+
+用户提问薪资计算相关问题（如"迟到3次扣多少钱"）时，LLM 未调用 `calculator.py` 中的计算工具，而是直接基于知识库内容生成模糊回答。
+
+### 根因分析
+
+`get_stream_answer()` 函数中存在两个缺陷：
+
+1. **LLM 未绑定工具**：初始化 LLM 时未调用 `llm.bind_tools(ALL_TOOLS)`，导致 LLM 无法感知可用工具
+2. **缺少 tool_calls 处理逻辑**：即使 LLM 返回 tool_calls，代码中也没有执行工具并将结果反馈给 LLM 的二次生成流程
+
+### 修复方案
+
+**修改文件**：`backend/src/core/rag_chain.py`
+
+1. **新增 `_execute_tool_call()` 辅助函数**
+   - 遍历 `ALL_TOOLS` 匹配工具名
+   - 调用 `t.invoke(tool_args)` 执行计算
+   - 返回 JSON 格式结果
+
+2. **重写 `get_stream_answer()` 的 LLM 调用流程**
+   - LLM 改用 `llm.bind_tools(ALL_TOOLS)` 绑定 4 个计算工具
+   - 第一次调用 `llm_with_tools.invoke()` 检查 `response.tool_calls`
+   - 若存在 tool_calls：
+     - 将 `ai_response` 追加到消息列表
+     - 遍历执行每个 tool_call，追加 `ToolMessage`
+     - 第二次调用 `llm.stream()`（不绑定工具）生成最终文本回答
+   - 若无 tool_calls：直接 `llm.stream()` 流式输出
+
+3. **新增 `ToolMessage` 导入**
+   - `from langchain_core.messages import ..., ToolMessage`
+
+### 测试结果
+
+| 测试场景 | 结果 |
+|----------|------|
+| "我月薪8000，迟到2次扣多少？" | PASS - 触发 `calculate_late_deduction_tool(8000, 2)`，返回 100 元 |
+| "你好"（普通对话） | PASS - 不触发工具，直接生成回答 |
+| 简单问候 | PASS - 无 tool_calls，正常流式输出 |
+
+### 验证命令
+
+```bash
+# 直接测试 LLM tool_calls
+python -c "
+import os
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage
+from src.core.tools import ALL_TOOLS
+
+api_key = os.environ.get('API_KEY')
+llm = ChatOpenAI(model='qwen3.7-plus', api_key=api_key, base_url='https://dashscope.aliyuncs.com/compatible-mode/v1')
+llm_with_tools = llm.bind_tools(ALL_TOOLS)
+resp = llm_with_tools.invoke([HumanMessage(content='我月薪8000，迟到2次扣多少？')])
+print('tool_calls:', resp.tool_calls)
+"
+# 预期输出: tool_calls: [{'name': 'calculate_late_deduction_tool', 'args': {'salary': 8000, 'late_count': 2}, ...}]
+```

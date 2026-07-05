@@ -14,7 +14,7 @@ from langchain_community.embeddings import DashScopeEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.chat_history import BaseChatMessageHistory, InMemoryChatMessageHistory
 from langchain_core.documents import Document
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableLambda, RunnableParallel, RunnablePassthrough
@@ -211,6 +211,32 @@ def get_answer(question: str, session_id: str = "default") -> str:
     return content
 
 
+def _execute_tool_call(tool_call: dict) -> str:
+    """执行单个工具调用并返回结果字符串
+
+    Args:
+        tool_call: LLM返回的tool_call字典，包含id、name、args
+
+    Returns:
+        工具执行结果的JSON字符串
+    """
+    import json
+
+    tool_name = tool_call.get("name", "")
+    tool_args = tool_call.get("args", {})
+
+    # 在ALL_TOOLS中查找匹配的工具
+    for t in ALL_TOOLS:
+        if t.name == tool_name:
+            try:
+                result = t.invoke(tool_args)
+                return json.dumps(result, ensure_ascii=False) if isinstance(result, dict) else str(result)
+            except Exception as e:
+                return json.dumps({"error": str(e)}, ensure_ascii=False)
+
+    return json.dumps({"error": f"工具 {tool_name} 不存在"}, ensure_ascii=False)
+
+
 def get_stream_answer(question: str, session_id: str = "default"):
     """流式获取RAG回答（生成器）
 
@@ -218,6 +244,7 @@ def get_stream_answer(question: str, session_id: str = "default"):
     - 敏感词过滤
     - 向量检索
     - 多轮对话历史
+    - Function Call工具调用
     - 字数截断控制
 
     Args:
@@ -232,14 +259,15 @@ def get_stream_answer(question: str, session_id: str = "default"):
     llm_config = get_llm_config()
     max_response_length = int(llm_config["max_response_length"])
 
-    api_key = os.environ.get("API_KEY")
-    # 初始化LLM
+    api_key = os.environ.get("DASHSCOPE_API_KEY") or os.environ.get("API_KEY")
+    # 初始化LLM（绑定工具）
     llm = ChatOpenAI(
         model=llm_config["llm_model"],
         api_key=api_key,
         temperature=0.3,
         base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
     )
+    llm_with_tools = llm.bind_tools(ALL_TOOLS)
 
     # 检索相关文档
     retriever = build_vector_retriever()
@@ -247,10 +275,6 @@ def get_stream_answer(question: str, session_id: str = "default"):
 
     # 获取历史
     history = get_session_history(session_id)
-    history_text = ""
-    for msg in history.messages:
-        role = "用户" if isinstance(msg, HumanMessage) else "助手"
-        history_text += f"{role}: {msg.content}\n"
 
     # 构建上下文
     context = _format_docs(docs)
@@ -280,13 +304,34 @@ def get_stream_answer(question: str, session_id: str = "default"):
         )
     )
 
-    # 流式输出
+    # 第一次调用LLM（绑定工具）
     full_response = ""
-    for chunk in llm.stream(messages):
-        content = chunk.content if hasattr(chunk, "content") else str(chunk)
-        if content:
-            full_response += content
-            yield content
+    ai_response = llm_with_tools.invoke(messages)
+
+    # 检查是否有tool_calls
+    tool_calls = getattr(ai_response, "tool_calls", None) or []
+
+    if tool_calls:
+        # 有工具调用：执行工具，将结果反馈给LLM二次生成
+        messages.append(ai_response)
+
+        for tc in tool_calls:
+            result = _execute_tool_call(tc)
+            messages.append(ToolMessage(content=result, tool_call_id=tc["id"]))
+
+        # 第二次调用LLM（带工具结果，不绑定工具以直接生成文本）
+        for chunk in llm.stream(messages):
+            content = chunk.content if hasattr(chunk, "content") else str(chunk)
+            if content:
+                full_response += content
+                yield content
+    else:
+        # 无工具调用：直接流式输出
+        for chunk in llm.stream(messages):
+            content = chunk.content if hasattr(chunk, "content") else str(chunk)
+            if content:
+                full_response += content
+                yield content
 
     # 截断超长回复
     if len(full_response) > max_response_length:
